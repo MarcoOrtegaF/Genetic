@@ -28,19 +28,19 @@ y = f(t)
 f_list = np.concatenate((y, y))
 
 # Calculate the tangent slopes at each point using the secant method
-tangent_slopes = np.zeros(len(t_list))
-for i in range(len(t_list) - 1):
-  tangent_slopes[i] = secant_tangent(f, t_list[i], t_list[i + 1])
+tangent_slopes = np.zeros(len(f_list))
+for i in range(len(f_list) - 1):
+  tangent_slopes[i] = secant_tangent(f, f_list[i], f_list[i + 1])
 
 # Find the points where the tangent slope is closest to zero
 zero_crossing_indices = np.where(np.abs(tangent_slopes) < 0.01)
 
 # Extract the t and f(t) values at the zero crossings
-zero_crossing_t = t_list[zero_crossing_indices]
+zero_crossing_t = f_list[zero_crossing_indices]
 zero_crossing_f = f(zero_crossing_t)
 
 # Plot the points (t,f(t))
-plt.plot(t_list, f_list)
+plt.plot(f_list, f_list)
 
 # Plot the points where the tangent slope is closest to zero
 plt.plot(zero_crossing_t, zero_crossing_f, 'o', color='red')

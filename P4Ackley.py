@@ -1,91 +1,72 @@
+import numpy as np
 import random
-import math
 
-class Chromosome:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.fitness = self.evaluate()
+# Define the Ackley function
+def ackley(x, y):
+    a = 20
+    b = 0.2
+    c = 2 * np.pi
+    return -a * np.exp(-b * np.sqrt(0.5 * (x**2 + y**2))) - np.exp(0.5 * (np.cos(c * x) + np.cos(c * y))) + a + np.exp(1)
 
-    def evaluate(self):
-        # Calculate the Ackley function in 2 dimensions
-        fitness = -20 * exp(-0.2 * sqrt(0.5 * (self.x**2 + self.y**2))) - exp(0.5 * (cos(2 * math.pi * self.x) + cos(2 * math.pi * self.y))) + 20 + math.e
-        return fitness
+# Genetic Algorithm parameters
+population_size = 100
+num_generations = 100
+mutation_rate = 0.1
 
-class Population:
-    def __init__(self, population_size):
-        self.chromosomes = []
-        for i in range(population_size):
-            # Generate a random chromosome
-            x = random.uniform(-10, 10)
-            y = random.uniform(-10, 10)
-            chromosome = Chromosome(x, y)
-            self.chromosomes.append(chromosome)
+# Define the initial population
+def initialize_population(size):
+    return [(random.uniform(-5, 5), random.uniform(-5, 5)) for _ in range(size)]
 
-    def sort(self):
-        # Sort the chromosomes by fitness, in ascending order
-        self.chromosomes.sort(key=lambda chromosome: chromosome.fitness)
+# Calculate the fitness of each individual
+def calculate_fitness(individual):
+    x, y = individual
+    return ackley(x, y)
 
-    def select(self, selection_pressure):
-        # Select the top chromosomes based on their fitness
-        selected_chromosomes = []
-        for i in range(selection_pressure):
-            selected_chromosomes.append(self.chromosomes[i])
-        return selected_chromosomes
+# Select parents for reproduction using tournament selection
+def tournament_selection(population, k=5):
+    tournament = random.sample(population, k)
+    return min(tournament, key=calculate_fitness)
 
-    def crossover(self, selected_chromosomes, crossover_rate):
-        # Crossover the selected chromosomes to produce new offspring
-        offspring = []
-        for i in range(0, len(selected_chromosomes) - 1, 2):
-            # Generate a random crossover point
-            crossover_point = random.randint(0, len(selected_chromosomes[0].x) - 1)
+# Crossover (single-point crossover in this example)
+def crossover(parent1, parent2):
+    x1, y1 = parent1
+    x2, y2 = parent2
+    crossover_point = random.randint(0, 1)
+    if crossover_point == 0:
+        return (x1, y2)
+    else:
+        return (x2, y1)
 
-            # Offspring 1
-            offspring_1 = Chromosome(selected_chromosomes[i].x[0:crossover_point] + selected_chromosomes[i + 1].x[crossover_point:], selected_chromosomes[i].y[0:crossover_point] + selected_chromosomes[i + 1].y[crossover_point:])
+# Mutate an individual
+def mutate(individual, mutation_rate):
+    x, y = individual
+    if random.random() < mutation_rate:
+        return (x + random.uniform(-0.1, 0.1), y + random.uniform(-0.1, 0.1))
+    else:
+        return individual
 
-            # Offspring 2
-            offspring_2 = Chromosome(selected_chromosomes[i + 1].x[0:crossover_point] + selected_chromosomes[i].x[crossover_point:], selected_chromosomes[i + 1].y[0:crossover_point] + selected_chromosomes[i].y[crossover_point:])
+# Main GA loop
+population = initialize_population(population_size)
 
-            # Add the offspring to the population
-            offspring.append(offspring_1)
-            offspring.append(offspring_2)
+for generation in range(num_generations):
+    population = sorted(population, key=calculate_fitness)
+    new_population = []
 
-        return offspring
+    # Elitism: Keep the best individual
+    new_population.append(population[0])
 
-    def mutate(self, offspring, mutation_rate):
-        # Mutate the offspring with a given probability
-        for chromosome in offspring:
-            for i in range(len(chromosome.x)):
-                if random.random() < mutation_rate:
-                    # Mutate the gene
-                    chromosome.x[i] += random.uniform(-0.1, 0.1)
-                    chromosome.y[i] += random.uniform(-0.1, 0.1)
+    # Create the next generation
+    while len(new_population) < population_size:
+        parent1 = tournament_selection(population)
+        parent2 = tournament_selection(population)
+        child = crossover(parent1, parent2)
+        child = mutate(child, mutation_rate)
+        new_population.append(child)
 
-        return offspring
+    population = new_population
 
-def run_ga(population_size, selection_pressure, crossover_rate, mutation_rate, max_iterations):
-    # Create an initial population
-    population = Population(population_size)
+best_solution = population[0]
+best_fitness = calculate_fitness(best_solution)
 
-    # Iterate over the generations
-    for i in range(max_iterations):
-        # Evaluate the fitness of each chromosome
-        population.sort()
-
-        # Select the top chromosomes based on their fitness
-        selected_chromosomes = population.select(selection_pressure)
-
-        # Crossover the selected chromosomes to produce new offspring
-        offspring = population.crossover(selected_chromosomes, crossover_rate)
-
-        # Mutate the offspring with a given probability
-        offspring = population.mutate(offspring, mutation_rate)
-
-        # Replace the old population with the new offspring
-        population.chromosomes = offspring
-
-        # Check if the global optima has been found
-        if population.chromosomes[0].fitness == 0.0:
-            break
-
-    # Return the best chromosome
+print(f"Best solution: {best_solution}")
+print(f"Best fitness: {best_fitness}")
