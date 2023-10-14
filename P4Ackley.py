@@ -1,72 +1,74 @@
 import numpy as np
-import random
 
-# Define the Ackley function
-def ackley(x, y):
-    a = 20
-    b = 0.2
-    c = 2 * np.pi
-    return -a * np.exp(-b * np.sqrt(0.5 * (x**2 + y**2))) - np.exp(0.5 * (np.cos(c * x) + np.cos(c * y))) + a + np.exp(1)
+# Rastrigin function
+def rastrigin(x):
+    A = 10
+    n = len(x)
+    return A * n + sum([(xi**2 - A * np.cos(2 * np.pi * xi)) for xi in x])
 
-# Genetic Algorithm parameters
-population_size = 100
-num_generations = 100
-mutation_rate = 0.1
+# Initialize the population
+def initialize_population(population_size, dimension):
+    population = np.random.uniform(-5.12, 5.12, (population_size, dimension))
+    return population
 
-# Define the initial population
-def initialize_population(size):
-    return [(random.uniform(-5, 5), random.uniform(-5, 5)) for _ in range(size)]
+# Evaluate the fitness of individuals
+def evaluate_fitness(population):
+    return np.array([rastrigin(individual) for individual in population])
 
-# Calculate the fitness of each individual
-def calculate_fitness(individual):
-    x, y = individual
-    return ackley(x, y)
+# Select parents using tournament selection
+def tournament_selection(population, fitness, num_parents):
+    selected_parents = []
+    for _ in range(num_parents):
+        indices = np.random.choice(len(population), size=2, replace=False)
+        selected = population[indices[np.argmin(fitness[indices])]]
+        selected_parents.append(selected)
+    return np.array(selected_parents)
 
-# Select parents for reproduction using tournament selection
-def tournament_selection(population, k=5):
-    tournament = random.sample(population, k)
-    return min(tournament, key=calculate_fitness)
+# Crossover (single-point crossover)
+def crossover(parents, num_offsprings):
+    offsprings = []
+    for _ in range(num_offsprings):
+        crossover_point = np.random.randint(1, len(parents[0]))
+        parent1 = parents[np.random.randint(len(parents))]
+        parent2 = parents[np.random.randint(len(parents))]
+        offspring = np.hstack((parent1[:crossover_point], parent2[crossover_point:]))
+        offsprings.append(offspring)
+    return np.array(offsprings)
 
-# Crossover (single-point crossover in this example)
-def crossover(parent1, parent2):
-    x1, y1 = parent1
-    x2, y2 = parent2
-    crossover_point = random.randint(0, 1)
-    if crossover_point == 0:
-        return (x1, y2)
-    else:
-        return (x2, y1)
+# Mutate offspring with a small probability
+def mutate(offsprings, mutation_rate):
+    mutated_offsprings = []
+    for offspring in offsprings:
+        if np.random.rand() < mutation_rate:
+            mutation_point = np.random.randint(len(offspring))
+            offspring[mutation_point] += np.random.uniform(-0.1, 0.1)
+        mutated_offsprings.append(offspring)
+    return np.array(mutated_offsprings)
 
-# Mutate an individual
-def mutate(individual, mutation_rate):
-    x, y = individual
-    if random.random() < mutation_rate:
-        return (x + random.uniform(-0.1, 0.1), y + random.uniform(-0.1, 0.1))
-    else:
-        return individual
+# Main GA function
+def genetic_algorithm(population_size, dimension, num_generations, num_parents, num_offsprings, mutation_rate):
+    population = initialize_population(population_size, dimension)
+    for generation in range(num_generations):
+        fitness = evaluate_fitness(population)
+        parents = tournament_selection(population, fitness, num_parents)
+        offsprings = crossover(parents, num_offsprings)
+        offsprings = mutate(offsprings, mutation_rate)
+        population[:num_parents] = parents
+        population[num_parents:] = offsprings
+        best_fitness = min(fitness)
+        print(f"Generation {generation}: Best Fitness = {best_fitness}")
+    
+    best_solution = population[np.argmin(fitness)]
+    return best_solution, rastrigin(best_solution)
 
-# Main GA loop
-population = initialize_population(population_size)
+if __name__ == "__main__":
+    population_size = 100
+    dimension = 3
+    num_generations = 100
+    num_parents = 50
+    num_offsprings = 50
+    mutation_rate = 0.1
 
-for generation in range(num_generations):
-    population = sorted(population, key=calculate_fitness)
-    new_population = []
-
-    # Elitism: Keep the best individual
-    new_population.append(population[0])
-
-    # Create the next generation
-    while len(new_population) < population_size:
-        parent1 = tournament_selection(population)
-        parent2 = tournament_selection(population)
-        child = crossover(parent1, parent2)
-        child = mutate(child, mutation_rate)
-        new_population.append(child)
-
-    population = new_population
-
-best_solution = population[0]
-best_fitness = calculate_fitness(best_solution)
-
-print(f"Best solution: {best_solution}")
-print(f"Best fitness: {best_fitness}")
+    best_solution, best_fitness = genetic_algorithm(population_size, dimension, num_generations, num_parents, num_offsprings, mutation_rate)
+    print(f"Best Solution: {best_solution}")
+    print(f"Best Fitness: {best_fitness}")
