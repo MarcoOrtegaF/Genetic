@@ -1,74 +1,74 @@
 import numpy as np
 
-# Rastrigin function
+#  FUNCION RASTRIGIN
 def rastrigin(x):
     A = 10
     n = len(x)
     return A * n + sum([(xi**2 - A * np.cos(2 * np.pi * xi)) for xi in x])
 
-# Initialize the population
-def initialize_population(population_size, dimension):
-    population = np.random.uniform(-5.12, 5.12, (population_size, dimension))
-    return population
+# INICIALIZAR LA POBLACION
+def inicPoblacion(tamPoblacion, dimension):
+    poblacion = np.random.uniform(-5.12, 5.12, (tamPoblacion, dimension))
+    return poblacion
 
-# Evaluate the fitness of individuals
-def evaluate_fitness(population):
-    return np.array([rastrigin(individual) for individual in population])
+# EVALUAR EL FITNESS INDIVIDUAL
+def calcFitness(poblacion):
+    return np.array([rastrigin(individual) for individual in poblacion])
 
-# Select parents using tournament selection
-def tournament_selection(population, fitness, num_parents):
-    selected_parents = []
-    for _ in range(num_parents):
-        indices = np.random.choice(len(population), size=2, replace=False)
-        selected = population[indices[np.argmin(fitness[indices])]]
-        selected_parents.append(selected)
-    return np.array(selected_parents)
+# SELECCIONAR A LOS PADRES USANDO LA SELECCION PPOR TORNEO
+def selecTorneo(poblacion, fitness, numPadres):
+    seleccionado_padres = []
+    for _ in range(numPadres):
+        indices = np.random.choice(len(poblacion), size=2, replace=False)
+        seleccionado = poblacion[indices[np.argmin(fitness[indices])]]
+        seleccionado_padres.append(seleccionado)
+    return np.array(seleccionado_padres)
 
-# Crossover (single-point crossover)
-def crossover(parents, num_offsprings):
-    offsprings = []
-    for _ in range(num_offsprings):
-        crossover_point = np.random.randint(1, len(parents[0]))
-        parent1 = parents[np.random.randint(len(parents))]
-        parent2 = parents[np.random.randint(len(parents))]
-        offspring = np.hstack((parent1[:crossover_point], parent2[crossover_point:]))
-        offsprings.append(offspring)
-    return np.array(offsprings)
+# CROSSOVER DE TIPO "SINGLE POINT"
+def crossover(padres, numHijos):
+    hijos = []
+    for _ in range(numHijos):
+        crossover_point = np.random.randint(1, len(padres[0]))
+        padre1 = padres[np.random.randint(len(padres))]
+        padre2 = padres[np.random.randint(len(padres))]
+        offspring = np.hstack((padre1[:crossover_point], padre2[crossover_point:]))
+        hijos.append(offspring)
+    return np.array(hijos)
 
-# Mutate offspring with a small probability
-def mutate(offsprings, mutation_rate):
-    mutated_offsprings = []
-    for offspring in offsprings:
-        if np.random.rand() < mutation_rate:
+# MUTAR CON PROBABILIDAD BAJA
+def mutar(hijos, tasaMutacion):
+    mutard_hijos = []
+    for offspring in hijos:
+        if np.random.rand() < tasaMutacion:
             mutation_point = np.random.randint(len(offspring))
             offspring[mutation_point] += np.random.uniform(-0.1, 0.1)
-        mutated_offsprings.append(offspring)
-    return np.array(mutated_offsprings)
+        mutard_hijos.append(offspring)
+    return np.array(mutard_hijos)
 
-# Main GA function
-def genetic_algorithm(population_size, dimension, num_generations, num_parents, num_offsprings, mutation_rate):
-    population = initialize_population(population_size, dimension)
-    for generation in range(num_generations):
-        fitness = evaluate_fitness(population)
-        parents = tournament_selection(population, fitness, num_parents)
-        offsprings = crossover(parents, num_offsprings)
-        offsprings = mutate(offsprings, mutation_rate)
-        population[:num_parents] = parents
-        population[num_parents:] = offsprings
-        best_fitness = min(fitness)
-        print(f"Generation {generation}: Best Fitness = {best_fitness}")
+# FUNCION PRINCIPAL
+def AlgGenetico(tamPoblacion, dimension, numGeneraciones, numPadres, numHijos, tasaMutacion):
+    poblacion = inicPoblacion(tamPoblacion, dimension)
+    for generation in range(numGeneraciones):
+        fitness = calcFitness(poblacion)
+        padres = selecTorneo(poblacion, fitness, numPadres)
+        hijos = crossover(padres, numHijos)
+        hijos = mutar(hijos, tasaMutacion)
+        poblacion[:numPadres] = padres
+        poblacion[numPadres:] = hijos
+        mejorFitness = min(fitness)
+        print(f"Genereacion {generation}: Mejor-Fitness = {mejorFitness}")
     
-    best_solution = population[np.argmin(fitness)]
-    return best_solution, rastrigin(best_solution)
+    mejorSolucion = poblacion[np.argmin(fitness)]
+    return mejorSolucion, rastrigin(mejorSolucion)
 
 if __name__ == "__main__":
-    population_size = 100
+    tamPoblacion = 10
     dimension = 3
-    num_generations = 100
-    num_parents = 50
-    num_offsprings = 50
-    mutation_rate = 0.1
+    numGeneraciones = 10
+    numPadres = 5
+    numHijos = 5
+    tasaMutacion = 0.1
 
-    best_solution, best_fitness = genetic_algorithm(population_size, dimension, num_generations, num_parents, num_offsprings, mutation_rate)
-    print(f"Best Solution: {best_solution}")
-    print(f"Best Fitness: {best_fitness}")
+    mejorSolucion, mejorFitness = AlgGenetico(tamPoblacion, dimension, numGeneraciones, numPadres, numHijos, tasaMutacion)
+    print(f"Mejor solucion: {mejorSolucion}")
+    print(f"Mejor Fitness: {mejorFitness}")

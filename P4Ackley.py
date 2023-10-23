@@ -1,74 +1,72 @@
 import numpy as np
+import random
 
-# Rastrigin function
-def rastrigin(x):
-    A = 10
-    n = len(x)
-    return A * n + sum([(xi**2 - A * np.cos(2 * np.pi * xi)) for xi in x])
+# DEFINICION DE LA FUNCION ACKLEY
+def ackley(x, y):
+    a = 20
+    b = 0.2
+    c = 2 * np.pi
+    return -a * np.exp(-b * np.sqrt(0.5 * (x**2 + y**2))) - np.exp(0.5 * (np.cos(c * x) + np.cos(c * y))) + a + np.exp(1)
 
-# Initialize the population
-def initialize_population(population_size, dimension):
-    population = np.random.uniform(-5.12, 5.12, (population_size, dimension))
-    return population
+# PARAMETROS DEL ALGORITMO GENETICO
+tamPobla = 10
+numGene = 10
+tasaMuta = 0.1
 
-# Evaluate the fitness of individuals
-def evaluate_fitness(population):
-    return np.array([rastrigin(individual) for individual in population])
+# DEFINIR LA POBLACION INICIAL
+def inicPoblacion(size):
+    return [(random.uniform(-5, 5), random.uniform(-5, 5)) for _ in range(size)]
 
-# Select parents using tournament selection
-def tournament_selection(population, fitness, num_parents):
-    selected_parents = []
-    for _ in range(num_parents):
-        indices = np.random.choice(len(population), size=2, replace=False)
-        selected = population[indices[np.argmin(fitness[indices])]]
-        selected_parents.append(selected)
-    return np.array(selected_parents)
+# CALCULA EL FITNESS DE CADA INDIVIDUO
+def calcFitness(individual):
+    x, y = individual
+    return ackley(x, y)
 
-# Crossover (single-point crossover)
-def crossover(parents, num_offsprings):
-    offsprings = []
-    for _ in range(num_offsprings):
-        crossover_point = np.random.randint(1, len(parents[0]))
-        parent1 = parents[np.random.randint(len(parents))]
-        parent2 = parents[np.random.randint(len(parents))]
-        offspring = np.hstack((parent1[:crossover_point], parent2[crossover_point:]))
-        offsprings.append(offspring)
-    return np.array(offsprings)
+# SELECCIONA LOS PADRES PARA REPRODUCCION USANDO EL METODO DE COMPETEMCIA
+def selecTorneo(poblacion, k=5):
+    tournament = random.sample(poblacion, k)
+    return min(tournament, key=calcFitness)
 
-# Mutate offspring with a small probability
-def mutate(offsprings, mutation_rate):
-    mutated_offsprings = []
-    for offspring in offsprings:
-        if np.random.rand() < mutation_rate:
-            mutation_point = np.random.randint(len(offspring))
-            offspring[mutation_point] += np.random.uniform(-0.1, 0.1)
-        mutated_offsprings.append(offspring)
-    return np.array(mutated_offsprings)
+# CROSSOVER DE TIPO "SINGLE POINT"
+def crossover(padre1, padre2):
+    x1, y1 = padre1
+    x2, y2 = padre2
+    crossover_point = random.randint(0, 1)
+    if crossover_point == 0:
+        return (x1, y2)
+    else:
+        return (x2, y1)
 
-# Main GA function
-def genetic_algorithm(population_size, dimension, num_generations, num_parents, num_offsprings, mutation_rate):
-    population = initialize_population(population_size, dimension)
-    for generation in range(num_generations):
-        fitness = evaluate_fitness(population)
-        parents = tournament_selection(population, fitness, num_parents)
-        offsprings = crossover(parents, num_offsprings)
-        offsprings = mutate(offsprings, mutation_rate)
-        population[:num_parents] = parents
-        population[num_parents:] = offsprings
-        best_fitness = min(fitness)
-        print(f"Generation {generation}: Best Fitness = {best_fitness}")
-    
-    best_solution = population[np.argmin(fitness)]
-    return best_solution, rastrigin(best_solution)
+# MUTACION IDIVIDUAL
+def mutar(individual, tasaMuta):
+    x, y = individual
+    if random.random() < tasaMuta:
+        return (x + random.uniform(-0.1, 0.1), y + random.uniform(-0.1, 0.1))
+    else:
+        return individual
 
-if __name__ == "__main__":
-    population_size = 100
-    dimension = 3
-    num_generations = 100
-    num_parents = 50
-    num_offsprings = 50
-    mutation_rate = 0.1
+# LOOP PARA EJECUTAR TODO EL ALGORITMO GENETICO
+poblacion = inicPoblacion(tamPobla)
 
-    best_solution, best_fitness = genetic_algorithm(population_size, dimension, num_generations, num_parents, num_offsprings, mutation_rate)
-    print(f"Best Solution: {best_solution}")
-    print(f"Best Fitness: {best_fitness}")
+for generation in range(numGene):
+    poblacion = sorted(poblacion, key=calcFitness)
+    new_poblacion = []
+
+    # ELITISMO: MANTIENE AL MEJOR INDIVIDUAL
+    new_poblacion.append(poblacion[0])
+
+    # CREAR A LA SIGUIENTE GENERACION
+    while len(new_poblacion) < tamPobla:
+        padre1 = selecTorneo(poblacion)
+        padre2 = selecTorneo(poblacion)
+        hijo = crossover(padre1, padre2)
+        hijo = mutar(hijo, tasaMuta)
+        new_poblacion.append(hijo)
+
+    poblacion = new_poblacion
+
+mejorSolu = poblacion[0]
+mejorFitness = calcFitness(mejorSolu)
+
+print(f"Mejor solucion: {mejorSolu}")
+print(f"Mejor fitness: {mejorFitness}\n")
