@@ -2,53 +2,38 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def f(t):
-  return np.sin(2 * np.pi * t / 5 + 0.2)
+  return np.sin(2*np.pi*t/5 + 0.2)
 
-def secant_tangent(f, t_1, t_2):
-  """
-  Approximates the tangent slope to the function f at the point t using the secant method.
+t = np.linspace(0, 2*np.pi*2, 1000)
 
-  Args:
-    f: The function to approximate the tangent slope of.
-    t_1: A point on the function curve.
-    t_2: Another point on the function curve.
+f_values = f(t)
 
-  Returns:
-    The approximate tangent slope to the function f at the point t.
-  """
-  return (f(t_2) - f(t_1)) / (t_2 - t_1)
+def tangent_slope(t):
+  h = 0.1
+  return (f(t + h) - f(t)) / h
 
-# Create a list of t values
-t = np.linspace(0, 10, 1000)
+tangent_slopes = tangent_slope(t)
 
-# Calculate the f(t) values
-y = f(t)
+min_index = np.argmin(np.abs(tangent_slopes))
+max_index = np.argmax(np.abs(tangent_slopes))
 
-# Create a list with two periods of the f(t) values
-f_list = np.concatenate((y, y))
+# Print the t and f(t) values at the points where the tangent slope is closest to zero
+print('Minimum tangent slope:')
+print('t:', t[min_index])
+print('f(t):', f(t[min_index]))
 
-# Calculate the tangent slopes at each point using the secant method
-tangent_slopes = np.zeros(len(f_list))
-for i in range(len(f_list) - 1):
-  tangent_slopes[i] = secant_tangent(f, f_list[i], f_list[i + 1])
+print('Maximum tangent slope:')
+print('t:', t[max_index])
+print('f(t):', f(t[max_index]))
 
-# Find the points where the tangent slope is closest to zero
-zero_crossing_indices = np.where(np.abs(tangent_slopes) < 0.01)
+plt.plot(t, f_values)
 
-# Extract the t and f(t) values at the zero crossings
-zero_crossing_t = f_list[zero_crossing_indices]
-zero_crossing_f = f(zero_crossing_t)
-
-# Plot the points (t,f(t))
-plt.plot(f_list, f_list)
-
-# Plot the points where the tangent slope is closest to zero
-plt.plot(zero_crossing_t, zero_crossing_f, 'o', color='red')
-
-# Add labels and title
+plt.title('f(t) = sin(2*pi*t/5 + 0.2)')
 plt.xlabel('t')
 plt.ylabel('f(t)')
-plt.title('Plot of f(t)=sin(2*pi*t/5 + 0.2) with zero crossings marked (secant method)')
 
-# Show the plot
+plt.plot(t[min_index], f(t[min_index]), 'ro')
+plt.plot(t[max_index], f(t[max_index]), 'bo')
+
 plt.show()
+

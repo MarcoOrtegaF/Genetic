@@ -1,82 +1,64 @@
 import random
 
-def generate_population(population_size):
+#DEFINIMOS LOS PARAMETROS DEL PROBLEMA Y LOS DEL ALGORITMO
+items = [
+    {"weight": 2, "value": 1},
+    {"weight": 2, "value": 2},
+    {"weight": 3, "value": 4},
+    {"weight": 4, "value": 5},
+    {"weight": 6, "value": 5},
+    {"weight": 7, "value": 6},
+    {"weight": 9, "value": 7},
+]
 
-    population = []
-    for i in range(population_size):
-        solution = []
-        for item in items:
-            if random.random() < 0.5:
-                solution.append(1)
-            else:
-                solution.append(0)
-        population.append(solution)
+W = 10
+tamPoblacion = 50
+generaciones = 100
+tasaMutacion = 0.5
 
-    return population
+# INICIALIZAR LA POBLACION
+def InicPoblacion():
+    return [random.choice([0, 1]) for _ in range(len(items))]
 
+def fitness(individual):
+    pesoTotal = sum(item["weight"] for i, item in enumerate(items) if individual[i])
+    if pesoTotal > W:
+        return 0  # PENALIZA SI EXCEDE EL TAMANIO DEL KANPSACK
+    valorTotal = sum(item["value"] for i, item in enumerate(items) if individual[i])
+    return valorTotal
 
-def evaluate_solution(solution):
+def crossover(padre1, padre2):
+    puntoCross = random.randint(1, len(padre1) - 1)
+    hijo = padre1[:puntoCross] + padre2[puntoCross:]
+    return hijo
 
-    fitness = 0
-    weight = 0
-    for i in range(len(solution)):
-        if solution[i] == 1:
-            fitness += items[i][0]
-            weight += items[i][1]
-    if weight <= capacity:
-        return fitness
-    else:
-        return 0
+def mutar(individual):
+    for i in range(len(individual)):
+        if random.random() < tasaMutacion:
+            individual[i] = 1 - individual[i]  # CAMBIA EL BIT
 
+# CICLO PRINCIPAL DEL GA
+poblacion = [InicPoblacion() for _ in range(tamPoblacion)]
 
-def crossover(solution1, solution2):
+for generation in range(generaciones):
+    poblacion = sorted(poblacion, key=lambda x: -fitness(x))
+    nuevaPoblacion = []
 
-    crossover_point = random.randint(0, len(solution1) - 1)
-    child1 = solution1[:crossover_point] + solution2[crossover_point:]
-    child2 = solution2[:crossover_point] + solution1[crossover_point:]
+    for _ in range(tamPoblacion // 2):
+        padre1, padre2 = random.choices(poblacion[:10], k=2)  # Select the top 10 individuals
+        hijo1 = crossover(padre1, padre2)
+        hijo2 = crossover(padre2, padre1)
+        mutar(hijo1)
+        mutar(hijo2)
+        nuevaPoblacion.extend([hijo1, hijo2])
 
-    return child1, child2
+    poblacion = nuevaPoblacion
 
+# ENCONTRAR LA MEJOR SOLUCION
+mejorSolucion = max(poblacion, key=fitness)
+mejorValor = fitness(mejorSolucion)
+mejorPeso = sum(item["weight"] for i, item in enumerate(items) if mejorSolucion[i])
 
-def mutate(solution):
-
-    mutation_point = random.randint(0, len(solution) - 1)
-    solution[mutation_point] = 1 - solution[mutation_point]
-
-    return solution
-
-
-def solve(population_size, generations):
-
-    population = generate_population(population_size)
-    best_solution = None
-    best_fitness = 0
-
-    for i in range(generations):
-        new_population = []
-        for j in range(0, population_size, 2):
-            child1, child2 = crossover(population[j], population[j + 1])
-            child1 = mutate(child1)
-            child2 = mutate(child2)
-            new_population.append(child1)
-            new_population.append(child2)
-
-        population = new_population
-
-        for solution in population:
-            fitness = evaluate_solution(solution)
-            if fitness > best_fitness:
-                best_solution = solution
-                best_fitness = fitness
-
-    return best_solution, best_fitness
-
-
-if __name__ == '__main__':
-    items = [(1, 2), (2, 2), (3, 4), (4, 5), (6, 5), (7, 6), (9, 7)]
-    capacity = 10
-
-    best_solution, best_fitness = solve(100, 200)
-
-    print("Best solution:", best_solution)
-    print("Best fitness:", best_fitness)
+print("\nMejor solucion:", mejorSolucion)
+print("Valor Total:", mejorValor)
+print("Peso Total:", mejorPeso)

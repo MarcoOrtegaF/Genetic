@@ -1,69 +1,76 @@
 import random
-import numpy as np
 
-class City:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
 
-    def distance(self, other):
-        return np.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
+# DEFINIR LAS CIUDADES COMO COORDENADAS X, Y
+ciudades = [(1, 3), (3, 5), (5, 7), (7, 9), (9, 2), (2, 4), (4, 6), (6, 8), (8, 10)]
 
-class TSP:
-    def __init__(self, cities):
-        self.cities = cities
-        self.tour = random.sample(self.cities, len(self.cities))
+# DEFINIMOS LOS VALORES DEL ALGORITMO
+tamPoblacion = 250
+numgenraciones = 500
 
-    def fitness(self):
-        total_distance = 0
-        for i in range(len(self.tour) - 1):
-            total_distance += self.tour[i].distance(self.tour[i + 1])
-        total_distance += self.tour[-1].distance(self.tour[0])
-        return total_distance
+# Define the mutation rate
+tasaMutacion = 0.8
 
-    def crossover(self, other):
-        child = TSP([])
-        for i in range(len(self.tour)):
-            if random.random() < 0.5:
-                child.tour.append(self.tour[i])
-            else:
-                child.tour.append(other.tour[i])
-        return child
+# FUNCION PARA CALCULAR LA DISTANCIA TOTAL DE LA RUTA
+def distanciaTotal(ruta):
+    distancia = 0
+    for i in range(len(ruta) - 1):
+        x1, y1 = ciudades[ruta[i]]
+        x2, y2 = ciudades[ruta[i + 1]]
+        distancia += ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+    return distancia
 
-    def mutate(self):
-        i = random.randint(0, len(self.tour) - 1)
-        j = random.randint(0, len(self.tour) - 1)
-        self.tour[i], self.tour[j] = self.tour[j], self.tour[i]
+# CREAR UNA POBLACION INICIAL DE RUTAS
+def InicPoblacion(tamPoblacion):
+    poblacion = []
+    for _ in range(tamPoblacion):
+        ruta = list(range(len(ciudades)))
+        random.shuffle(ruta)
+        poblacion.append(ruta)
+    return poblacion
 
-def genetic_algorithm(cities, population_size, generations):
-    population = []
-    for i in range(population_size):
-        population.append(TSP(cities))
+# MUTAR LA RUTA
+def mutar(ruta):
+    for i in range(len(ruta)):
+        if random.random() < tasaMutacion:
+            j = random.randint(0, len(ruta) - 1)
+            ruta[i], ruta[j] = ruta[j], ruta[i]
+    return ruta
 
-    best_tour = population[0]
-    for i in range(generations):
-        new_population = []
-        for j in range(0, population_size, 2):
-            parent1 = random.choice(population)
-            parent2 = random.choice(population)
-            child = parent1.crossover(parent2)
-            child.mutate()
-            new_population.append(child)
+# SELECCIONAR DOS PADRES DE LA POBLACION MEDIANTE UN TORNEO
+def selPadres(poblacion):
+    tamTorneo = 5
+    candidatos = random.sample(poblacion, tamTorneo)
+    candidatos.sort(key=lambda ruta: distanciaTotal(ruta))
+    return candidatos[0], candidatos[1]
 
-        population = new_population
-        best_tour = min(population, key=lambda tour: tour.fitness())
+# CCREAMOS NUEVAS RUTAS CON EL CROSSOVER
+def crossover(padre1, padre2):
+    puntoCross = random.randint(0, len(padre1) - 1)
+    hijo = padre1[:puntoCross]
+    for gen in padre2:
+        if gen not in hijo:
+            hijo.append(gen)
+    return hijo
 
-    return best_tour
+# CICLO PRINCIPAL DEGL GA
+poblacion = InicPoblacion(tamPoblacion)
 
-def main():
-    cities = [City(1, 2), City(3, 4), City(5, 6), City(7, 8), City(9, 10)]
-    best_tour = genetic_algorithm(cities, 100, 100)
+for generacion in range(numgenraciones):
+    poblacion.sort(key=lambda ruta: distanciaTotal(ruta))
+    mejorRuta = poblacion[0]
+    print(f"generacion {generacion}: Best distancia = {distanciaTotal(mejorRuta)}")
 
-    print("Best tour:")
-    for city in best_tour.tour:
-        print(city.x, city.y)
+    nuevaPoblacion = [mejorRuta]
 
-    print("Total distance:", best_tour.fitness())
+    while len(nuevaPoblacion) < tamPoblacion:
+        padre1, padre2 = selPadres(poblacion)
+        hijo = crossover(padre1, padre2)
+        hijo = mutar(hijo)
+        nuevaPoblacion.append(hijo)
 
-if __name__ == "__main__":
-    main()
+    poblacion = nuevaPoblacion
+
+mejorRuta = poblacion[0]
+print("Best ruta:", mejorRuta)
+print("Best distancia:", distanciaTotal(mejorRuta))
