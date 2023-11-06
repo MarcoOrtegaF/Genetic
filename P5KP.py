@@ -62,3 +62,5 @@ mejorPeso = sum(item["weight"] for i, item in enumerate(items) if mejorSolucion[
 print("\nMejor solucion:", mejorSolucion)
 print("Valor Total:", mejorValor)
 print("Peso Total:", mejorPeso)
+
+

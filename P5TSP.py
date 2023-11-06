@@ -7,8 +7,6 @@ ciudades = [(1, 3), (3, 5), (5, 7), (7, 9), (9, 2), (2, 4), (4, 6), (6, 8), (8, 
 # DEFINIMOS LOS VALORES DEL ALGORITMO
 tamPoblacion = 250
 numgenraciones = 500
-
-# Define the mutation rate
 tasaMutacion = 0.8
 
 # FUNCION PARA CALCULAR LA DISTANCIA TOTAL DE LA RUTA

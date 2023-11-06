@@ -9,7 +9,7 @@ def ackley(x, y):
     return -a * np.exp(-b * np.sqrt(0.5 * (x**2 + y**2))) - np.exp(0.5 * (np.cos(c * x) + np.cos(c * y))) + a + np.exp(1)
 
 # PARAMETROS DEL ALGORITMO GENETICO
-tamPobla = 10
+tamPobla = 100
 numGene = 10
 tasaMuta = 0.1
 
